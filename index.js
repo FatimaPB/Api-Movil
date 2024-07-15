@@ -2,10 +2,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer'); // Importar multer
 require("dotenv").config();
-const AdministradoresRoutes = require("./routes/Administradores");
-const CategoriaRoutes= require("./routes/Categorias");
-const NivelRoutes = require("./routes/Niveles")
-const PreguntasRoutes = require('./routes/Preguntas'); // Importar tus rutas de preguntas
+const AdministradoresRoutes = require("./src/routes/Administradores");
+const CategoriaRoutes= require("./src/routes/Categorias");
+const NivelRoutes = require("./src/routes/Niveles")
+const PreguntasRoutes = require('./src/routes/Preguntas'); // Importar tus rutas de preguntas
 
 
 const app =  express();
