@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+app.use(cors());
 const multer = require('multer'); // Importar multer
 require("dotenv").config();
 const AdministradoresRoutes = require("./src/routes/Administradores");
