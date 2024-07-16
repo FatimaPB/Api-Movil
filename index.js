@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-app.use(cors());
+const cors = require('cors');
 const multer = require('multer'); // Importar multer
 require("dotenv").config();
 const AdministradoresRoutes = require("./src/routes/Administradores");
@@ -16,6 +16,7 @@ const port = process.env.PORT || 3000;
 //midedleware
 
 app.use(express.json());
+app.use(cors());
 app.use('/uploads', express.static('uploads')); // Servir archivos estáticos de la carpeta uploads
 app.use('/api',AdministradoresRoutes);
 app.use('/api' , CategoriaRoutes);
