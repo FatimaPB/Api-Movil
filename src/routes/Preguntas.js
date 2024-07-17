@@ -18,42 +18,16 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Crear pregunta
-router.post('/preguntas', upload.fields([
-  { name: 'imagen1', maxCount: 1 },
-  { name: 'imagen2', maxCount: 1 },
-  { name: 'imagen3', maxCount: 1 },
-  { name: 'imagen4', maxCount: 1 },
-  { name: 'imagenCorrecta', maxCount: 1 }
-]), (req, res) => {
-  const {
+router.post('/preguntas', upload.single('imagenPregunta'), (req, res) => {
+  const { categoria, nivel, pregunta, respuestaNumerica } = req.body;
+  const imagenPregunta = req.file ? req.file.path : null;
+
+  const nuevaPregunta = new PreguntaSchema({
     categoria,
     nivel,
     pregunta,
-    respuesta1,
-    respuesta2,
-    respuesta3,
-    respuesta4,
-    respuestaCorrecta
-  } = req.body;
-
-  const imagen1 = req.files.imagen1 ? req.files.imagen1[0].path : null;
-  const imagen2 = req.files.imagen2 ? req.files.imagen2[0].path : null;
-  const imagen3 = req.files.imagen3 ? req.files.imagen3[0].path : null;
-  const imagen4 = req.files.imagen4 ? req.files.imagen4[0].path : null;
-  const imagenCorrecta = req.files.imagenCorrecta ? req.files.imagenCorrecta[0].path : null;
-
-  const nuevaPregunta = PreguntaSchema({
-    categoria,
-    nivel,
-    pregunta,
-    respuestas: [
-      { texto: respuesta1, imagen: imagen1 },
-      { texto: respuesta2, imagen: imagen2 },
-      { texto: respuesta3, imagen: imagen3 },
-      { texto: respuesta4, imagen: imagen4 }
-    ],
-    respuestaCorrecta,
-    imagenCorrecta
+    respuestaNumerica,
+    imagenPregunta
   });
 
   nuevaPregunta
@@ -80,50 +54,18 @@ router.get('/preguntas/:id', (req, res) => {
 });
 
 // Editar pregunta
-router.put('/preguntas/:id', upload.fields([
-  { name: 'imagen1', maxCount: 1 },
-  { name: 'imagen2', maxCount: 1 },
-  { name: 'imagen3', maxCount: 1 },
-  { name: 'imagen4', maxCount: 1 },
-  { name: 'imagenCorrecta', maxCount: 1 }
-]), (req, res) => {
+router.put('/preguntas/:id', upload.single('imagenPregunta'), (req, res) => {
   const { id } = req.params;
-  const {
-    categoria,
-    nivel,
-    pregunta,
-    respuesta1,
-    respuesta2,
-    respuesta3,
-    respuesta4,
-    respuestaCorrecta
-  } = req.body;
+  const { categoria, nivel, pregunta, respuestaNumerica } = req.body;
+  const imagenPregunta = req.file ? req.file.path : null;
 
-  const imagen1 = req.files.imagen1 ? req.files.imagen1[0].path : null;
-  const imagen2 = req.files.imagen2 ? req.files.imagen2[0].path : null;
-  const imagen3 = req.files.imagen3 ? req.files.imagen3[0].path : null;
-  const imagen4 = req.files.imagen4 ? req.files.imagen4[0].path : null;
-  const imagenCorrecta = req.files.imagenCorrecta ? req.files.imagenCorrecta[0].path : null;
+  const updateData = { categoria, nivel, pregunta, respuestaNumerica };
+  if (imagenPregunta) {
+    updateData.imagenPregunta = imagenPregunta;
+  }
 
   PreguntaSchema
-    .updateOne(
-      { _id: id },
-      {
-        $set: {
-          categoria,
-          nivel,
-          pregunta,
-          respuestas: [
-            { texto: respuesta1, imagen: imagen1 },
-            { texto: respuesta2, imagen: imagen2 },
-            { texto: respuesta3, imagen: imagen3 },
-            { texto: respuesta4, imagen: imagen4 }
-          ],
-          respuestaCorrecta,
-          imagenCorrecta
-        }
-      }
-    )
+    .updateOne({ _id: id }, { $set: updateData })
     .then((data) => res.json(data))
     .catch((error) => res.json({ message: error }));
 });

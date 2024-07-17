@@ -1,15 +1,5 @@
 const mongoose = require('mongoose');
 
-const RespuestaSchema = mongoose.Schema({
-  texto: {
-    type: String,
-    required: true
-  },
-  imagen: {
-    type: String
-  }
-});
-
 const PreguntaSchema = mongoose.Schema({
   categoria: {
     type: String,
@@ -23,13 +13,12 @@ const PreguntaSchema = mongoose.Schema({
     type: String,
     required: true
   },
-  respuestas: [RespuestaSchema],
-  respuestaCorrecta: {
-    type: String,
+  respuestaNumerica: {
+    type: Number,
     required: true
   },
-  imagenCorrecta: {
-    type: String
+  imagenPregunta: {
+    type: String  // Opcional: si hay una imagen asociada a la pregunta
   }
 });
 
