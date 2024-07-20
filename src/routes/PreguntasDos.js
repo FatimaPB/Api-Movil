@@ -54,6 +54,16 @@ router.get('/preguntasDos/:id', (req, res) => {
     .catch((error) => res.json({ message: error }));
 });
 
+// Obtener preguntas por categoría y nivel
+router.get('/preguntasDos/:categoria/:nivel', (req, res) => {
+  const { categoria, nivel } = req.params;
+  
+  PreguntaDosSchema
+    .find({ categoria, nivel })
+    .then((data) => res.json(data))
+    .catch((error) => res.json({ message: error }));
+});
+
 // Editar pregunta
 router.put('/preguntasDos/:id', upload.fields([{ name: 'imagen1', maxCount: 1 }, { name: 'imagen2', maxCount: 1 }]), (req, res) => {
   const { id } = req.params;

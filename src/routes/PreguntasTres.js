@@ -56,6 +56,15 @@ router.get('/preguntasTres/:id', (req, res) => {
     .catch((error) => res.json({ message: error }));
 });
 
+// Obtener preguntas por categoría y nivel
+router.get('/preguntasTres/:categoria/:nivel', (req, res) => {
+  const { categoria, nivel } = req.params;
+  
+  PreguntaTresSchema
+    .find({ categoria, nivel })
+    .then((data) => res.json(data))
+    .catch((error) => res.json({ message: error }));
+});
 // Editar pregunta
 router.put('/preguntasTres/:id', upload.fields([{ name: 'imagen1', maxCount: 1 }, { name: 'imagen2', maxCount: 1 }]), (req, res) => {
   const { id } = req.params;

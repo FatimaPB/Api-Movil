@@ -53,6 +53,16 @@ router.get('/preguntas/:id', (req, res) => {
     .catch((error) => res.json({ message: error }));
 });
 
+// Obtener preguntas por categoría y nivel
+router.get('/preguntas/:categoria/:nivel', (req, res) => {
+  const { categoria, nivel } = req.params;
+  
+  PreguntaSchema
+    .find({ categoria, nivel })
+    .then((data) => res.json(data))
+    .catch((error) => res.json({ message: error }));
+});
+
 // Editar pregunta
 router.put('/preguntas/:id', upload.single('imagenPregunta'), (req, res) => {
   const { id } = req.params;
