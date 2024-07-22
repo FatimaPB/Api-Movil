@@ -10,6 +10,7 @@ const NivelRoutes = require("./src/routes/Niveles");
 const PreguntasRoutes = require('./src/routes/Preguntas'); // Importar tus rutas de preguntas
 const PreguntasDosRoutes = require ('./src/routes/PreguntasDos');
 const PreguntaTresRoutes = require ('./src/routes/PreguntasTres');
+const loginRoutes = require('./src/routes/login')
 const app =  express();
 const port = process.env.PORT || 3000;
 
@@ -25,6 +26,7 @@ app.use('/api', NivelRoutes);
 app.use('/api', PreguntasRoutes);
 app.use('/api' , PreguntasDosRoutes);
 app.use('/api', PreguntaTresRoutes);
+app.use('/api',loginRoutes)
 
 
 //Rutas
