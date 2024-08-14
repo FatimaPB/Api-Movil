@@ -18,15 +18,19 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-// Crear pregunta
 router.post('/preguntas', upload.single('imagenPregunta'), async (req, res) => {
   try {
     const { categoria, nivel, pregunta, respuestaNumerica } = req.body;
     let imagenPregunta = null;
 
     if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path); // Subir imagen a Cloudinary
-      imagenPregunta = result.secure_url; // Obtener la URL de la imagen desde Cloudinary
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path);
+        imagenPregunta = result.secure_url;
+      } catch (uploadError) {
+        console.error('Error uploading image to Cloudinary:', uploadError);
+        return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
+      }
     }
 
     const nuevaPregunta = new PreguntaSchema({
@@ -40,11 +44,11 @@ router.post('/preguntas', upload.single('imagenPregunta'), async (req, res) => {
     const savedPregunta = await nuevaPregunta.save();
     res.json(savedPregunta);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error creating question:', error);
+    res.status(500).json({ message: 'Error creating question', error: error.message });
   }
 });
 
-// Editar pregunta
 router.put('/preguntas/:id', upload.single('imagenPregunta'), async (req, res) => {
   try {
     const { id } = req.params;
@@ -52,8 +56,13 @@ router.put('/preguntas/:id', upload.single('imagenPregunta'), async (req, res) =
     let imagenPregunta = null;
 
     if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path); // Subir imagen a Cloudinary
-      imagenPregunta = result.secure_url; // Obtener la URL de la imagen desde Cloudinary
+      try {
+        const result = await cloudinary.uploader.upload(req.file.path);
+        imagenPregunta = result.secure_url;
+      } catch (uploadError) {
+        console.error('Error uploading image to Cloudinary:', uploadError);
+        return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
+      }
     }
 
     const updateData = { categoria, nivel, pregunta, respuestaNumerica };
@@ -64,9 +73,11 @@ router.put('/preguntas/:id', upload.single('imagenPregunta'), async (req, res) =
     const updatedPregunta = await PreguntaSchema.findByIdAndUpdate(id, updateData, { new: true });
     res.json(updatedPregunta);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error updating question:', error);
+    res.status(500).json({ message: 'Error updating question', error: error.message });
   }
 });
+
 
 
 // Obtener todas las preguntas
