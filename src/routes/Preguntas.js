@@ -55,30 +55,33 @@ router.post('/preguntas', upload.single('imagenPregunta'), async (req, res) => {
 
 router.put('/preguntas/:id', upload.single('imagenPregunta'), async (req, res) => {
   try {
-    const { id } = req.params;
-    const { categoria, nivel, pregunta, respuestaNumerica } = req.body;
-    let imagenPregunta = null;
-
-    if (req.file) {
-      try {
-        const result = await cloudinary.uploader.upload(req.file.path);
-        imagenPregunta = result.secure_url;
-
-        // Eliminar archivo local después de subir a Cloudinary
-        fs.unlinkSync(req.file.path);
-      } catch (uploadError) {
-        console.error('Error uploading image to Cloudinary:', uploadError);
-        return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
+    const { categoria,
+       nivel, 
+       pregunta, 
+       respuestaNumerica 
+      } = req.body;
+ 
+      let imagenUrl = null;
+      if (req.file) {
+        imagenUrl = await uploadToCloudinary(req.file.buffer);
       }
-    }
+  
+    const updateData = await PreguntaSchema.findByIdAndUpdate( 
+      req.params.id,
+      {
+         categoria, 
+        nivel,
+        pregunta, 
+        respuestaNumerica ,
+        imagenPregunta : imagenUrl || undefined,
+      },
+      {new : true}
+    );
 
-    const updateData = { categoria, nivel, pregunta, respuestaNumerica };
-    if (imagenPregunta) {
-      updateData.imagenPregunta = imagenPregunta;
+    if (!updateData) {
+      return res.status(404).json({ message: 'pregunta no encontrada' });
     }
-
-    const updatedPregunta = await PreguntaSchema.findByIdAndUpdate(id, updateData, { new: true });
-    res.json(updatedPregunta);
+    res.json(updateData);
   } catch (error) {
     console.error('Error updating question:', error);
     res.status(500).json({ message: 'Error updating question', error: error.message });
