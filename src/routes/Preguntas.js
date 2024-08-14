@@ -6,43 +6,43 @@ const cloudinary = require('../config/cloudinaryConfig');
 const path = require('path');
 const fs = require('fs');
 
-// Configuración de almacenamiento de Multer
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, 'uploads/'); // Directorio donde se guardarán los archivos
-    },
-    filename: function (req, file, cb) {
-      const extension = path.extname(file.originalname);
-      cb(null, file.fieldname + '-' + Date.now() + extension); // Nombre del archivo guardado
-    }
-  });
-
+// Configuración de almacenamiento de Multer en memoria
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+
+// Función para subir imágenes a Cloudinary
+const uploadToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream((error, result) => {
+      if (error) {
+        return reject(error);
+      }
+      resolve(result.secure_url);
+    }).end(fileBuffer);
+  });
+};
+
 
 router.post('/preguntas', upload.single('imagenPregunta'), async (req, res) => {
   try {
-    const { categoria, nivel, pregunta, respuestaNumerica } = req.body;
-    let imagenPregunta = null;
 
+    let imagenUrl = null;
     if (req.file) {
-      try {
-        const result = await cloudinary.uploader.upload(req.file.path);
-        imagenPregunta = result.secure_url;
-
-        // Eliminar archivo local después de subir a Cloudinary
-        fs.unlinkSync(req.file.path);
-      } catch (uploadError) {
-        console.error('Error uploading image to Cloudinary:', uploadError);
-        return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
-      }
+      imagenUrl = await uploadToCloudinary(req.file.buffer);
     }
+
+    const { 
+      categoria,
+       nivel, 
+       pregunta,
+       respuestaNumerica } = req.body;
 
     const nuevaPregunta = new PreguntaSchema({
       categoria,
       nivel,
       pregunta,
       respuestaNumerica,
-      imagenPregunta
+      imagenPregunta : imagenUrl,
     });
 
     const savedPregunta = await nuevaPregunta.save();
