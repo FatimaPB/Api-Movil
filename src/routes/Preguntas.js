@@ -2,6 +2,7 @@ const express = require('express');
 const PreguntaSchema = require('../models/Preguntas');
 const router = express.Router();
 const multer = require('multer'); // Importar multer
+const cloudinary = require('../config/cloudinaryConfig');
 const path = require('path');
 
 // Configuración de almacenamiento de Multer
@@ -18,23 +19,55 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Crear pregunta
-router.post('/preguntas', upload.single('imagenPregunta'), (req, res) => {
-  const { categoria, nivel, pregunta, respuestaNumerica } = req.body;
-  const imagenPregunta = req.file ? req.file.path : null;
+router.post('/preguntas', upload.single('imagenPregunta'), async (req, res) => {
+  try {
+    const { categoria, nivel, pregunta, respuestaNumerica } = req.body;
+    let imagenPregunta = null;
 
-  const nuevaPregunta = new PreguntaSchema({
-    categoria,
-    nivel,
-    pregunta,
-    respuestaNumerica,
-    imagenPregunta
-  });
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path); // Subir imagen a Cloudinary
+      imagenPregunta = result.secure_url; // Obtener la URL de la imagen desde Cloudinary
+    }
 
-  nuevaPregunta
-    .save()
-    .then((data) => res.json(data))
-    .catch((error) => res.json({ message: error }));
+    const nuevaPregunta = new PreguntaSchema({
+      categoria,
+      nivel,
+      pregunta,
+      respuestaNumerica,
+      imagenPregunta
+    });
+
+    const savedPregunta = await nuevaPregunta.save();
+    res.json(savedPregunta);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
+
+// Editar pregunta
+router.put('/preguntas/:id', upload.single('imagenPregunta'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { categoria, nivel, pregunta, respuestaNumerica } = req.body;
+    let imagenPregunta = null;
+
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path); // Subir imagen a Cloudinary
+      imagenPregunta = result.secure_url; // Obtener la URL de la imagen desde Cloudinary
+    }
+
+    const updateData = { categoria, nivel, pregunta, respuestaNumerica };
+    if (imagenPregunta) {
+      updateData.imagenPregunta = imagenPregunta;
+    }
+
+    const updatedPregunta = await PreguntaSchema.findByIdAndUpdate(id, updateData, { new: true });
+    res.json(updatedPregunta);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 
 // Obtener todas las preguntas
 router.get('/preguntas', (req, res) => {
@@ -59,23 +92,6 @@ router.get('/preguntas/:categoria/:nivel', (req, res) => {
   
   PreguntaSchema
     .find({ categoria, nivel })
-    .then((data) => res.json(data))
-    .catch((error) => res.json({ message: error }));
-});
-
-// Editar pregunta
-router.put('/preguntas/:id', upload.single('imagenPregunta'), (req, res) => {
-  const { id } = req.params;
-  const { categoria, nivel, pregunta, respuestaNumerica } = req.body;
-  const imagenPregunta = req.file ? req.file.path : null;
-
-  const updateData = { categoria, nivel, pregunta, respuestaNumerica };
-  if (imagenPregunta) {
-    updateData.imagenPregunta = imagenPregunta;
-  }
-
-  PreguntaSchema
-    .updateOne({ _id: id }, { $set: updateData })
     .then((data) => res.json(data))
     .catch((error) => res.json({ message: error }));
 });
