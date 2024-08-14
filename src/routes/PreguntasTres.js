@@ -3,41 +3,94 @@ const PreguntaTresSchema = require('../models/PreguntasTres');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const cloudinary = require('../config/cloudinaryConfig');
 
-// Configuración de almacenamiento de Multer
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    const extension = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + Date.now() + extension);
-  }
-});
-
+// Configuración de almacenamiento de Multer en memoria
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+// Función para subir imágenes a Cloudinary
+const uploadToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream((error, result) => {
+      if (error) {
+        return reject(error);
+      }
+      resolve(result.secure_url);
+    }).end(fileBuffer);
+  });
+};
+
 // Crear pregunta
-router.post('/preguntasTres', upload.fields([{ name: 'imagen1', maxCount: 1 }, { name: 'imagen2', maxCount: 1 }]), (req, res) => {
+router.post('/preguntasTres', upload.fields([{ name: 'imagen1', maxCount: 1 }, { name: 'imagen2', maxCount: 1 }]),async (req, res) => {
   const { categoria, nivel, pregunta, numeroUno, numeroDos, resultado } = req.body;
-  const imagen1 = req.files.imagen1 ? req.files.imagen1[0].path : null;
-  const imagen2 = req.files.imagen2 ? req.files.imagen2[0].path : null;
+
+  let imagen1Url = null;
+  let imagen2Url = null;
+
+  
+  if (req.files.imagen1) {
+    imagen1Url = await uploadToCloudinary(req.files.imagen1[0].buffer);
+  }
+
+  if (req.files.imagen2) {
+    imagen2Url = await uploadToCloudinary(req.files.imagen2[0].buffer);
+  }
+
 
   const nuevaPreguntaTres = new PreguntaTresSchema({
     categoria,
     nivel,
     pregunta,
     numeroUno,
-    imagen1,
     numeroDos,
-    imagen2,
-    resultado
+    resultado,
+    imagen1: imagen1Url,
+    imagen2: imagen2Url,
   });
 
   nuevaPreguntaTres
     .save()
     .then((data) => res.json(data))
     .catch((error) => res.json({ message: error }));
+});
+
+// editar pregunta
+router.put('/preguntasTres/:id', upload.fields([{ name: 'imagen1', maxCount: 1 }, { name: 'imagen2', maxCount: 1 }]),async (req, res) => {
+
+  const {id} = req.params;
+  const { categoria, nivel, pregunta, numeroUno, numeroDos, resultado } = req.body;
+
+  let imagen1Url = null;
+  let imagen2Url = null;
+
+  
+  if (req.files.imagen1) {
+    imagen1Url = await uploadToCloudinary(req.files.imagen1[0].buffer);
+  }
+
+  if (req.files.imagen2) {
+    imagen2Url = await uploadToCloudinary(req.files.imagen2[0].buffer);
+  }
+
+
+  const  updateData = {
+    categoria,
+    nivel,
+    pregunta,
+    numeroUno,
+    numeroDos,
+    resultado,
+    ...(imagen1Url && { imagen1: imagen1Url }),
+    ...(imagen2Url && { imagen2: imagen2Url }),
+  };
+
+  const updatedPreguntaTres = await PreguntaTresSchema.findByIdAndUpdate(id, updateData, { new: true });
+  if (!updatedPreguntaTres) {
+    return res.status(404).json({ message: 'Pregunta no encontrada' });
+  }
+
+  res.json(updatedPreguntaTres);
 });
 
 // Obtener todas las preguntas
@@ -62,22 +115,6 @@ router.get('/preguntasTres/:categoria/:nivel', (req, res) => {
   
   PreguntaTresSchema
     .find({ categoria, nivel })
-    .then((data) => res.json(data))
-    .catch((error) => res.json({ message: error }));
-});
-// Editar pregunta
-router.put('/preguntasTres/:id', upload.fields([{ name: 'imagen1', maxCount: 1 }, { name: 'imagen2', maxCount: 1 }]), (req, res) => {
-  const { id } = req.params;
-  const { categoria, nivel, pregunta, numeroUno, numeroDos, resultado } = req.body;
-  const imagen1 = req.files.imagen1 ? req.files.imagen1[0].path : null;
-  const imagen2 = req.files.imagen2 ? req.files.imagen2[0].path : null;
-
-  const updateData = { categoria, nivel, pregunta, numeroUno, numeroDos, resultado };
-  if (imagen1) updateData.imagen1 = imagen1;
-  if (imagen2) updateData.imagen2 = imagen2;
-
-  PreguntaTresSchema
-  .updateOne({ _id: id }, { $set: updateData })
     .then((data) => res.json(data))
     .catch((error) => res.json({ message: error }));
 });
