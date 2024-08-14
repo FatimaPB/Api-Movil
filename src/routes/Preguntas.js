@@ -4,6 +4,7 @@ const router = express.Router();
 const multer = require('multer'); // Importar multer
 const cloudinary = require('../config/cloudinaryConfig');
 const path = require('path');
+const fs = require('fs');
 
 // Configuración de almacenamiento de Multer
 const storage = multer.diskStorage({
@@ -27,6 +28,9 @@ router.post('/preguntas', upload.single('imagenPregunta'), async (req, res) => {
       try {
         const result = await cloudinary.uploader.upload(req.file.path);
         imagenPregunta = result.secure_url;
+
+        // Eliminar archivo local después de subir a Cloudinary
+        fs.unlinkSync(req.file.path);
       } catch (uploadError) {
         console.error('Error uploading image to Cloudinary:', uploadError);
         return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
@@ -59,6 +63,9 @@ router.put('/preguntas/:id', upload.single('imagenPregunta'), async (req, res) =
       try {
         const result = await cloudinary.uploader.upload(req.file.path);
         imagenPregunta = result.secure_url;
+
+        // Eliminar archivo local después de subir a Cloudinary
+        fs.unlinkSync(req.file.path);
       } catch (uploadError) {
         console.error('Error uploading image to Cloudinary:', uploadError);
         return res.status(500).json({ message: 'Error uploading image to Cloudinary' });
@@ -77,8 +84,6 @@ router.put('/preguntas/:id', upload.single('imagenPregunta'), async (req, res) =
     res.status(500).json({ message: 'Error updating question', error: error.message });
   }
 });
-
-
 
 // Obtener todas las preguntas
 router.get('/preguntas', (req, res) => {
